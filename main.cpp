@@ -1,13 +1,13 @@
 //=====[Libraries]=============================================================
 
-#include "smart_home_system.h"
+#include "espresso_scale.h"
 
 //=====[Main function, the program entry point after power on or reset]========
 
 int main()
 {
-    smartHomeSystemInit();
+    espressoScaleInit();
     while (true) {
-        smartHomeSystemUpdate();
+        espressoScaleUpdate();
     }
 }
