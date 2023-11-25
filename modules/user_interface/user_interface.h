@@ -13,7 +13,7 @@ void userInterfaceInit();
 void userInterfaceUpdate();
 bool userInterfaceCodeCompleteRead();
 void userInterfaceCodeCompleteWrite( bool state );
-
+void timerUpdate(const char * botonPresionado);
 bool incorrectCodeStateRead();
 void incorrectCodeStateWrite( bool state );
 

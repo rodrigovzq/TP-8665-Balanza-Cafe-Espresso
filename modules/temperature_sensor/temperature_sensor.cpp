@@ -65,7 +65,7 @@ void temperatureSensorUpdate()
 
 float temperatureSensorReadCelsius()
 {
-    return lm35TemperatureC;
+    return lm35.read();
 }
 
 float temperatureSensorReadFahrenheit()

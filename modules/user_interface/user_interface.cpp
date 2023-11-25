@@ -5,6 +5,7 @@
 
 #include "user_interface.h"
 
+#include "load_cell.h"
 #include "code.h"
 #include "siren.h"
 #include "espresso_scale.h"
@@ -19,7 +20,7 @@
 
 //=====[Declaration of private defines]========================================
 
-#define DISPLAY_REFRESH_TIME_MS 100
+#define DISPLAY_REFRESH_TIME_MS 300
 
 //=====[Declaration of private data types]=====================================
 
@@ -92,6 +93,7 @@ void userInterfaceInit()
     timerButton.mode(PullDown);
     //matrixKeypadInit( SYSTEM_TIME_INCREMENT_MS );
     userInterfaceDisplayInit();
+    loadCellInit();
 }
 
 void userInterfaceUpdate()
@@ -104,6 +106,7 @@ void userInterfaceUpdate()
     //incorrectCodeIndicatorUpdate();
     //systemBlockedIndicatorUpdate();
     userInterfaceDisplayUpdate();
+    
     if (timerRunning){
         timerLed=ON;
     }else{
@@ -177,7 +180,6 @@ static void userInterfaceMatrixKeypadUpdate()
 static void userInterfaceDisplayInit()
 {
     displayInit( DISPLAY_CONNECTION_GPIO_4BITS );
-     
     displayCharPositionWrite ( 0,0 );
     displayStringWrite( "Peso:" );
 
@@ -188,7 +190,7 @@ static void userInterfaceDisplayInit()
 static void userInterfaceDisplayUpdate()
 {
   static int accumulatedDisplayTime = 0;
-    char temperatureString[8] = ""; //TODO: Reemplazar temperature por buttonkeypad
+    char loadCellString[8] = "";
     char tiempoStr[50]; // Cadena para almacenar el tiempo convertido a string
     
     if( accumulatedDisplayTime >=
@@ -198,11 +200,14 @@ static void userInterfaceDisplayUpdate()
         botonesLectura =temperatureSensorReadCelsius();
 
         
-        sprintf(temperatureString, "%.5f", temperatureSensorReadCelsius()); // TODO: reemplazar por lectura de
+        sprintf(loadCellString, "%.2f", loadCellRead()); 
         displayCharPositionWrite ( 5,0 );
-        displayStringWrite( temperatureString );
-        displayCharPositionWrite ( 11,0 );
-        displayStringWrite( " gr" );
+        displayStringWrite( loadCellString );
+        //displayCharPositionWrite ( 11,0 );
+        sprintf(loadCellString, "%.2u", loadCellReadRaw()); 
+        displayCharPositionWrite ( 0,1 );
+        displayStringWrite( loadCellString );
+        // displayStringWrite( " gr" );
 
         const char* botonPresionado = obtenerBotonPresionado(botonesLectura);
         unsigned long long int tiempoMili = duration_cast<milliseconds>(t.elapsed_time()).count();
