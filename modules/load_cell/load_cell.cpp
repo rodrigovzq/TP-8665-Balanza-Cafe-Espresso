@@ -5,20 +5,21 @@
 #include "load_cell.h"
 
 #include "espresso_scale.h"
-
+#include "pc_serial_com.h"
 #include "Hx711.h"
 #include <cstdint>
 
 //=====[Declaration and initialization of public global objects]===============
 Hx711 loadcell(D11,D10,128);
-
+uint32_t  LOADCELL_OFFSET =0;
+const float LOADCELL_SCALE = 2172;
 void loadCellInit(){
     loadcell.power_up();
 
-    uint32_t  LOADCELL_OFFSET = read_average(10);
-    const float LOADCELL_SCALE = 0.0078182954;
+    LOADCELL_OFFSET = read_average(5);
+    
     loadcell.set_offset(LOADCELL_OFFSET);
-    loadcell.set_scale(LOADCELL_SCALE);
+    //loadcell.set_scale(LOADCELL_SCALE);
     //auto_scale(LOADCELL_SCALE);
 }
 
@@ -28,7 +29,11 @@ uint32_t loadCellReadRaw(){
 
 float loadCellRead(){
     
-    return loadcell.read();
+    float x =  loadcell.read()/LOADCELL_SCALE;
+    char aux[15]="";
+    sprintf(aux,"%f\n",x);
+    pcSerialComStringWrite(aux);
+    return x;
 }
 
 uint32_t read_average(int times) {
@@ -45,4 +50,8 @@ void auto_scale(float scale){
         loadcell.set_scale(scale);
         scale=scale/10;
     }
+}
+
+uint32_t getOffset(){
+    return LOADCELL_OFFSET;
 }

@@ -18,6 +18,8 @@ float loadCellRead();
 uint32_t read_average(int times);
 void auto_scale(float scale);
 
+uint32_t getOffset();
+
 //=====[#include guards - end]=================================================
 
 #endif // _LOAD_CELL_H_
