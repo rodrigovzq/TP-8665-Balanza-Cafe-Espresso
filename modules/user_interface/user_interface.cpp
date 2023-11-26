@@ -15,6 +15,7 @@
 #include "gas_sensor.h"
 #include "keypad.h"
 #include "display.h"
+#include "microphone.h"
 #include <string.h>
 #include <cstring>
 
@@ -190,9 +191,9 @@ static void userInterfaceDisplayInit()
 static void userInterfaceDisplayUpdate()
 {
   static int accumulatedDisplayTime = 0;
-    char loadCellString[8] = "";
+    char loadCellString[20] = "";
     char tiempoStr[50]; // Cadena para almacenar el tiempo convertido a string
-    
+    char aux[5]="";
     if( accumulatedDisplayTime >=
         DISPLAY_REFRESH_TIME_MS ) {
 
@@ -200,14 +201,20 @@ static void userInterfaceDisplayUpdate()
         botonesLectura =temperatureSensorReadCelsius();
 
         
-        sprintf(loadCellString, "%.2f", loadCellRead()); 
+        sprintf(loadCellString, "%0.1f", loadCellRead()); 
         displayCharPositionWrite ( 5,0 );
         displayStringWrite( loadCellString );
         //displayCharPositionWrite ( 11,0 );
-        sprintf(loadCellString, "%.2u", loadCellReadRaw()); 
+       // sprintf(loadCellString, "%u", loadCellReadRaw()); 
         displayCharPositionWrite ( 0,1 );
+        sprintf(loadCellString,"%u",getOffset());
         displayStringWrite( loadCellString );
         // displayStringWrite( " gr" );
+
+        // sprintf(aux,"%.2f",micAnalogRead());
+        // displayCharPositionWrite ( 0,1 );
+        // sprintf(aux,"%d",micDigitalRead());
+        // displayCharPositionWrite ( 6,1 );
 
         const char* botonPresionado = obtenerBotonPresionado(botonesLectura);
         unsigned long long int tiempoMili = duration_cast<milliseconds>(t.elapsed_time()).count();
@@ -217,7 +224,7 @@ static void userInterfaceDisplayUpdate()
             displayStringWrite( tiempoStr );
         } else{
             displayCharPositionWrite ( 0,1 );
-            displayStringWrite( "                " );
+            //displayStringWrite( "                " );
         }
 
 
