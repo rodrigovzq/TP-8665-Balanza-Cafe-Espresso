@@ -201,14 +201,14 @@ static void userInterfaceDisplayUpdate()
         botonesLectura =temperatureSensorReadCelsius();
 
         
-        sprintf(loadCellString, "%0.1f", loadCellRead()); 
+        sprintf(loadCellString, "%04.1f", loadCellRead()); 
         displayCharPositionWrite ( 5,0 );
         displayStringWrite( loadCellString );
         //displayCharPositionWrite ( 11,0 );
        // sprintf(loadCellString, "%u", loadCellReadRaw()); 
-        displayCharPositionWrite ( 0,1 );
-        sprintf(loadCellString,"%u",getOffset());
-        displayStringWrite( loadCellString );
+        // displayCharPositionWrite ( 0,1 );
+        // sprintf(loadCellString,"%u",getOffset());
+        // displayStringWrite( loadCellString );
         // displayStringWrite( " gr" );
 
         // sprintf(aux,"%.2f",micAnalogRead());
