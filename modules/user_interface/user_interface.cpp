@@ -237,8 +237,12 @@ static void userInterfaceDisplayUpdate()
                 sprintf(loadCellString, "%0.1f oz         ", loadCellReadOz());
             break;
         }
-        
-         
+        displayCharPositionWrite(14,1);
+        if (triggerState == TRIGGER_MIC){
+            displayStringWrite("*");
+        }else{
+            displayStringWrite(" ");
+        }
         displayCharPositionWrite ( 0,0 );
         displayStringWrite( loadCellString );
 
@@ -251,7 +255,7 @@ static void userInterfaceDisplayUpdate()
             sprintf(tiempoStr, "%.3f s", (float) tiempoMili/1000);
             displayStringWrite( tiempoStr );
         } else{
-            displayStringWrite( "                " );
+            displayStringWrite( "         " );
         }
 
 
