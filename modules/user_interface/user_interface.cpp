@@ -7,7 +7,6 @@
 
 #include "load_cell.h"
 #include "espresso_scale.h"
-#include "temperature_sensor.h"
 #include "keypad.h"
 #include "display.h"
 #include "microphone.h"
@@ -17,6 +16,7 @@
 //=====[Declaration of private defines]========================================
 
 #define DISPLAY_REFRESH_TIME_MS 200
+#define SOUND_TRIGGER_THRESHOLD 0.9
 
 //=====[Declaration of private data types]=====================================
 
@@ -26,6 +26,7 @@ DigitalOut incorrectCodeLed(LED3);
 DigitalOut micLed(LED2);
 DigitalOut timerLed(LED1);
 DigitalIn timerButton(BUTTON1);
+AnalogIn keypad(A1);
 
 UnbufferedSerial uartUsb(USBTX, USBRX, 115200);
 
@@ -49,6 +50,7 @@ using namespace std::chrono;
 Timer t;
 
 triggerState_t triggerState;
+unit_t unitState;
 
 //=====[Declaration and initialization of private global variables]============
 
@@ -87,13 +89,14 @@ void timerUpdate() {
         break;
         case TRIGGER_MIC:
             int x;
-            if(micAnalogRead()>0.9){
+            if(micAnalogRead()>SOUND_TRIGGER_THRESHOLD){
                 if(!timerRunning){
                     timerRunning=true;
                     t.start();
                 }
             }
             if(timerButton==ON && timerRunning){
+                triggerState=TRIGGER_BUTTON;
                 timerRunning=false;
                 t.stop();
                 while(timerButton==ON){ //debounce
@@ -152,7 +155,27 @@ void triggerUpdate(const char * botonPresionado){
                 triggerState = TRIGGER_BUTTON;
             break;
         }
-    delay(500);
+    delay(700);
+    }
+
+
+}
+
+void unitUpdate(const char * botonPresionado){
+
+    if(!strcmp(botonPresionado, "LEFT ")){
+        switch (unitState){
+
+            case UNIT_GR:
+                unitState=UNIT_OZ;
+                delay(700);
+            break;
+            case UNIT_OZ:
+                unitState=UNIT_GR;
+                delay(700);
+            break;
+        }
+    
     }
 
 
@@ -160,28 +183,25 @@ void triggerUpdate(const char * botonPresionado){
 void userInterfaceInit()
 {
     triggerState = TRIGGER_BUTTON;
+    unitState = UNIT_GR;
     timerButton.mode(PullDown);
-    //matrixKeypadInit( SYSTEM_TIME_INCREMENT_MS );
     userInterfaceDisplayInit();
     loadCellInit();
 }
 
 void userInterfaceUpdate()
 {
-    botonesLectura =temperatureSensorReadCelsius();
+    botonesLectura =keypad.read();
     const char * botonPresionado = obtenerBotonPresionado(botonesLectura);
     triggerUpdate(botonPresionado);
+    unitUpdate(botonPresionado);
     timerUpdate();
     loadCellUpdate(botonPresionado);
-    //userInterfaceMatrixKeypadUpdate();
-    //incorrectCodeIndicatorUpdate();
-    //systemBlockedIndicatorUpdate();
     userInterfaceDisplayUpdate();
     char aux[10]="";
     
-    sprintf(aux,"%f\n",micAnalogRead());
-    if(micDigitalRead())
-        pcSerialComStringWrite(aux);    
+    sprintf(aux,"%f\n",botonesLectura);
+    pcSerialComStringWrite(botonPresionado);    
     
     
 }
@@ -195,11 +215,7 @@ void userInterfaceUpdate()
 static void userInterfaceDisplayInit()
 {
     displayInit( DISPLAY_CONNECTION_GPIO_4BITS );
-    displayCharPositionWrite ( 0,0 );
-    displayStringWrite( "Peso:" );
 
-   // displayCharPositionWrite ( 0,1 );
-   // displayStringWrite( "Tiempo:" );
 }
 
 static void userInterfaceDisplayUpdate()
@@ -212,23 +228,29 @@ static void userInterfaceDisplayUpdate()
         DISPLAY_REFRESH_TIME_MS ) {
 
         accumulatedDisplayTime = 0;
-        botonesLectura =temperatureSensorReadCelsius();
+        switch (unitState){
 
+            case UNIT_GR:
+                sprintf(loadCellString, "%0.1f gr         ", loadCellReadGr());
+            break;
+            case UNIT_OZ:
+                sprintf(loadCellString, "%0.1f oz         ", loadCellReadOz());
+            break;
+        }
         
-        sprintf(loadCellString, "%0.1f          ", loadCellRead()); 
-        displayCharPositionWrite ( 5,0 );
+         
+        displayCharPositionWrite ( 0,0 );
         displayStringWrite( loadCellString );
 
 
         const char* botonPresionado = obtenerBotonPresionado(botonesLectura);
         unsigned long long int tiempoMili = duration_cast<milliseconds>(t.elapsed_time()).count();
+        displayCharPositionWrite ( 0,1 );
         if (tiempoMili){
             
-            sprintf(tiempoStr, "Tiempo: %.3f s", (float) tiempoMili/1000);
-            displayCharPositionWrite ( 0,1 );
+            sprintf(tiempoStr, "%.3f s", (float) tiempoMili/1000);
             displayStringWrite( tiempoStr );
         } else{
-            displayCharPositionWrite ( 0,1 );
             displayStringWrite( "                " );
         }
 

@@ -12,6 +12,11 @@ typedef enum {
     TRIGGER_MIC,
     TRIGGER_EXT
 } triggerState_t;
+
+typedef enum{
+    UNIT_GR,
+    UNIT_OZ
+} unit_t;
 //=====[Declarations (prototypes) of public functions]=========================
 
 void userInterfaceInit();

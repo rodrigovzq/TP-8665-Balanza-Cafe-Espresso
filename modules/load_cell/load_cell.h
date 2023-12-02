@@ -14,7 +14,8 @@ void loadCellInit();
 
 uint32_t loadCellReadRaw();
 
-float loadCellRead();
+float loadCellReadGr();
+float loadCellReadOz();
 uint32_t read_average(int times);
 void auto_scale(float scale);
 

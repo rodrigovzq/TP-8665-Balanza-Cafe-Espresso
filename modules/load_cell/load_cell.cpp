@@ -11,7 +11,8 @@
 //=====[Declaration and initialization of public global objects]===============
 Hx711 loadcell(D11,D10,128);
 uint32_t  LOADCELL_OFFSET =0;
-const float LOADCELL_SCALE = 2172;
+const float LOADCELL_SCALE_GR = 2172;
+const float LOADCELL_SCALE_OZ = 61513;
 
 void loadCellInit(){
     loadcell.power_up();
@@ -27,9 +28,16 @@ uint32_t loadCellReadRaw(){
     return loadcell.readRaw();
 }
 
-float loadCellRead(){
+float loadCellReadGr(){
     
-    float x =  loadcell.read()/LOADCELL_SCALE;
+    float x =  loadcell.read()/LOADCELL_SCALE_GR;
+    if (x<0 && x>-0.2)
+        x=0;
+    return x;
+}
+float loadCellReadOz(){
+    
+    float x =  loadcell.read()/LOADCELL_SCALE_OZ;
     if (x<0 && x>-0.2)
         x=0;
     return x;
