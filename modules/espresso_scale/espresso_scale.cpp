@@ -3,12 +3,7 @@
 #include "arm_book_lib.h"
 
 #include "espresso_scale.h"
-
-#include "siren.h"
 #include "user_interface.h"
-#include "fire_alarm.h"
-#include "pc_serial_com.h"
-#include "event_log.h"
 #include "keypad.h"
 
 //=====[Declaration of private defines]========================================
@@ -37,7 +32,6 @@ void espressoScaleInit()
 void espressoScaleUpdate()
 {
     userInterfaceUpdate();
-    eventLogUpdate();
     delay(SYSTEM_TIME_INCREMENT_MS);
 }
 

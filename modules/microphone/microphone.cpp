@@ -8,14 +8,24 @@
 
 //=====[Declaration and initialization of public global objects]===============
 
-DigitalIn dMic(D12);
 
 AnalogIn aMic(A0);
+
+
+static long read_average(int times) {
+	long sum = 0;
+	for (int i = 0; i < times; i++) {
+		sum += aMic.read();
+	}
+	return sum / times;
+}
+
 
 float micAnalogRead(){
     return aMic.read();
 }
 
-int micDigitalRead() { 
-       return dMic;
+bool micDigitalRead() { 
+    return read_average(5) > 0.5;
 }
+

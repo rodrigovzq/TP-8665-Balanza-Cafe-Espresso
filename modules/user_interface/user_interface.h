@@ -7,18 +7,20 @@
 
 //=====[Declaration of public data types]======================================
 
+typedef enum {
+    TRIGGER_BUTTON,
+    TRIGGER_MIC,
+    TRIGGER_EXT
+} triggerState_t;
 //=====[Declarations (prototypes) of public functions]=========================
 
 void userInterfaceInit();
 void userInterfaceUpdate();
-bool userInterfaceCodeCompleteRead();
-void userInterfaceCodeCompleteWrite( bool state );
-void timerUpdate(const char * botonPresionado);
-bool incorrectCodeStateRead();
-void incorrectCodeStateWrite( bool state );
+void timerUpdate();
+void loadCellUpdate(const char * botonPresionado);
+void triggerUpdate(const char * botonPresionado);
 
-bool systemBlockedStateRead();
-void systemBlockedStateWrite( bool state );
+
 
 //=====[#include guards - end]=================================================
 

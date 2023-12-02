@@ -19,6 +19,7 @@ uint32_t read_average(int times);
 void auto_scale(float scale);
 
 uint32_t getOffset();
+void tare();
 
 //=====[#include guards - end]=================================================
 

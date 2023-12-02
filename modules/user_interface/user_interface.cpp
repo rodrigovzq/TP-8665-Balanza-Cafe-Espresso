@@ -6,13 +6,8 @@
 #include "user_interface.h"
 
 #include "load_cell.h"
-#include "code.h"
-#include "siren.h"
 #include "espresso_scale.h"
-#include "fire_alarm.h"
-#include "date_and_time.h"
 #include "temperature_sensor.h"
-#include "gas_sensor.h"
 #include "keypad.h"
 #include "display.h"
 #include "microphone.h"
@@ -21,22 +16,28 @@
 
 //=====[Declaration of private defines]========================================
 
-#define DISPLAY_REFRESH_TIME_MS 300
+#define DISPLAY_REFRESH_TIME_MS 200
 
 //=====[Declaration of private data types]=====================================
 
 //=====[Declaration and initialization of public global objects]===============
 
 DigitalOut incorrectCodeLed(LED3);
-DigitalOut systemBlockedLed(LED2);
+DigitalOut micLed(LED2);
 DigitalOut timerLed(LED1);
 DigitalIn timerButton(BUTTON1);
+
+UnbufferedSerial uartUsb(USBTX, USBRX, 115200);
+
+void pcSerialComStringWrite( const char* str )
+{
+    uartUsb.write( str, strlen(str) );
+}
 
 //=====[Declaration of external public global variables]=======================
 
 //=====[Declaration and initialization of public global variables]=============
 
-char codeSequenceFromUserInterface[CODE_NUMBER_OF_KEYS];
 
 static bool timerRunning = false;
 static clock_t startTime = 0;
@@ -47,39 +48,77 @@ using namespace std::chrono;
 
 Timer t;
 
+triggerState_t triggerState;
+
 //=====[Declaration and initialization of private global variables]============
 
-static bool incorrectCodeState = OFF;
-static bool systemBlockedState = OFF;
-
-static bool codeComplete = false;
-static int numberOfCodeChars = 0;
 
 //=====[Declarations (prototypes) of private functions]========================
 
-static void userInterfaceMatrixKeypadUpdate();
-static void incorrectCodeIndicatorUpdate();
-static void systemBlockedIndicatorUpdate();
 
 static void userInterfaceDisplayInit();
 static void userInterfaceDisplayUpdate();
 
 //=====[Implementations of public functions]===================================
-void timerUpdate(const char * botonPresionado) {
+void timerUpdate() {
 
-    if (timerButton==ON){ //si apreto el boton de SET
-        if(!timerRunning){
-            timerRunning=true;
-            t.start();
-        }
-        else{
-            timerRunning=false;
-            t.stop();
-        }
-        while(timerButton==ON){
 
-        }
+    if (timerRunning){
+        timerLed=ON;
+    }else{
+        timerLed=OFF;
     }
+    switch (triggerState){
+
+        case TRIGGER_BUTTON:
+             if (timerButton==ON){ //si apreto el boton de timer
+                if(!timerRunning){
+                    timerRunning=true;
+                    t.start();
+                }
+                else{
+                    timerRunning=false;
+                    t.stop();
+                }
+                while(timerButton==ON){ //debounce
+
+                }
+            }
+        break;
+        case TRIGGER_MIC:
+            int x;
+            if(micAnalogRead()>0.9){
+                if(!timerRunning){
+                    timerRunning=true;
+                    t.start();
+                }
+            }
+            if(timerButton==ON && timerRunning){
+                timerRunning=false;
+                t.stop();
+                while(timerButton==ON){ //debounce
+                }
+            }
+            break;
+
+        case TRIGGER_EXT:
+            int y;
+            // if(micDigitalRead()){
+            //     if(!timerRunning){
+            //         timerRunning=true;
+            //         t.start();
+            //     }
+            // }
+            // if(timerButton==ON && timerRunning){
+            //     timerRunning=false;
+            //     t.stop();
+            //     while(timerButton==ON){ //debounce
+            //     }
+            // }
+            break;
+            
+    }
+    const char * botonPresionado = obtenerBotonPresionado(botonesLectura);
     if(!strcmp(botonPresionado, "DOWN ")){
         timerRunning=false;
         t.reset();
@@ -87,10 +126,40 @@ void timerUpdate(const char * botonPresionado) {
     }
    
 } 
+void loadCellUpdate(const char * botonPresionado) {
+    if(!strcmp(botonPresionado, "RIGHT")){
+        tare();
+    }
+}
+
+void triggerUpdate(const char * botonPresionado){
+    if (triggerState == TRIGGER_MIC){
+        micLed=ON;
+    }else{
+        micLed=OFF;
+    }
+    if(!strcmp(botonPresionado, "UP")){
+        switch (triggerState){
+
+            case TRIGGER_BUTTON:
+                triggerState = TRIGGER_MIC;
+            break;
+            case TRIGGER_MIC:
+                triggerState = TRIGGER_BUTTON;
+
+            break;
+            case TRIGGER_EXT:
+                triggerState = TRIGGER_BUTTON;
+            break;
+        }
+    delay(500);
+    }
+
+
+}
 void userInterfaceInit()
 {
-    incorrectCodeLed = OFF;
-    systemBlockedLed = OFF;
+    triggerState = TRIGGER_BUTTON;
     timerButton.mode(PullDown);
     //matrixKeypadInit( SYSTEM_TIME_INCREMENT_MS );
     userInterfaceDisplayInit();
@@ -101,82 +170,27 @@ void userInterfaceUpdate()
 {
     botonesLectura =temperatureSensorReadCelsius();
     const char * botonPresionado = obtenerBotonPresionado(botonesLectura);
-
-    timerUpdate(botonPresionado);
+    triggerUpdate(botonPresionado);
+    timerUpdate();
+    loadCellUpdate(botonPresionado);
     //userInterfaceMatrixKeypadUpdate();
     //incorrectCodeIndicatorUpdate();
     //systemBlockedIndicatorUpdate();
     userInterfaceDisplayUpdate();
+    char aux[10]="";
     
-    if (timerRunning){
-        timerLed=ON;
-    }else{
-        timerLed=OFF;
-    }
+    sprintf(aux,"%f\n",micAnalogRead());
+    if(micDigitalRead())
+        pcSerialComStringWrite(aux);    
+    
+    
 }
 
-bool incorrectCodeStateRead()
-{
-    return incorrectCodeState;
-}
 
-void incorrectCodeStateWrite( bool state )
-{
-    incorrectCodeState = state;
-}
-
-bool systemBlockedStateRead()
-{
-    return systemBlockedState;
-}
-
-void systemBlockedStateWrite( bool state )
-{
-    systemBlockedState = state;
-}
-
-bool userInterfaceCodeCompleteRead()
-{
-    return codeComplete;
-}
-
-void userInterfaceCodeCompleteWrite( bool state )
-{
-    codeComplete = state;
-}
 
 
 //=====[Implementations of private functions]==================================
 
-static void userInterfaceMatrixKeypadUpdate()
-{
-    // static int numberOfHashKeyReleased = 0;
-    // char keyReleased = matrixKeypadUpdate();
-
-    // if( keyReleased != '\0' ) {
-
-    //     if( sirenStateRead() && !systemBlockedStateRead() ) {
-    //         if( !incorrectCodeStateRead() ) {
-    //             codeSequenceFromUserInterface[numberOfCodeChars] = keyReleased;
-    //             numberOfCodeChars++;
-    //             if ( numberOfCodeChars >= CODE_NUMBER_OF_KEYS ) {
-    //                 codeComplete = true;
-    //                 numberOfCodeChars = 0;
-    //             }
-    //         } else {
-    //             if( keyReleased == '#' ) {
-    //                 numberOfHashKeyReleased++;
-    //                 if( numberOfHashKeyReleased >= 2 ) {
-    //                     numberOfHashKeyReleased = 0;
-    //                     numberOfCodeChars = 0;
-    //                     codeComplete = false;
-    //                     incorrectCodeState = OFF;
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-}
 
 static void userInterfaceDisplayInit()
 {
@@ -201,30 +215,21 @@ static void userInterfaceDisplayUpdate()
         botonesLectura =temperatureSensorReadCelsius();
 
         
-        sprintf(loadCellString, "%04.1f", loadCellRead()); 
+        sprintf(loadCellString, "%0.1f          ", loadCellRead()); 
         displayCharPositionWrite ( 5,0 );
         displayStringWrite( loadCellString );
-        //displayCharPositionWrite ( 11,0 );
-       // sprintf(loadCellString, "%u", loadCellReadRaw()); 
-        // displayCharPositionWrite ( 0,1 );
-        // sprintf(loadCellString,"%u",getOffset());
-        // displayStringWrite( loadCellString );
-        // displayStringWrite( " gr" );
 
-        // sprintf(aux,"%.2f",micAnalogRead());
-        // displayCharPositionWrite ( 0,1 );
-        // sprintf(aux,"%d",micDigitalRead());
-        // displayCharPositionWrite ( 6,1 );
 
         const char* botonPresionado = obtenerBotonPresionado(botonesLectura);
         unsigned long long int tiempoMili = duration_cast<milliseconds>(t.elapsed_time()).count();
         if (tiempoMili){
+            
             sprintf(tiempoStr, "Tiempo: %.3f s", (float) tiempoMili/1000);
             displayCharPositionWrite ( 0,1 );
             displayStringWrite( tiempoStr );
         } else{
             displayCharPositionWrite ( 0,1 );
-            //displayStringWrite( "                " );
+            displayStringWrite( "                " );
         }
 
 
@@ -237,12 +242,5 @@ static void userInterfaceDisplayUpdate()
     } 
 }
 
-static void incorrectCodeIndicatorUpdate()
-{
-    incorrectCodeLed = incorrectCodeStateRead();
-}
 
-static void systemBlockedIndicatorUpdate()
-{
-    systemBlockedLed = systemBlockedState;
-}
+

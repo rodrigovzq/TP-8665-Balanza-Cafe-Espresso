@@ -5,7 +5,6 @@
 #include "load_cell.h"
 
 #include "espresso_scale.h"
-#include "pc_serial_com.h"
 #include "Hx711.h"
 #include <cstdint>
 
@@ -13,6 +12,7 @@
 Hx711 loadcell(D11,D10,128);
 uint32_t  LOADCELL_OFFSET =0;
 const float LOADCELL_SCALE = 2172;
+
 void loadCellInit(){
     loadcell.power_up();
 
@@ -30,9 +30,8 @@ uint32_t loadCellReadRaw(){
 float loadCellRead(){
     
     float x =  loadcell.read()/LOADCELL_SCALE;
-    char aux[15]="";
-    sprintf(aux,"%f\n",x);
-    pcSerialComStringWrite(aux);
+    if (x<0 && x>-0.2)
+        x=0;
     return x;
 }
 
@@ -54,4 +53,11 @@ void auto_scale(float scale){
 
 uint32_t getOffset(){
     return LOADCELL_OFFSET;
+}
+
+void tare(){
+
+    LOADCELL_OFFSET = read_average(5);
+    loadcell.set_offset(LOADCELL_OFFSET);
+
 }

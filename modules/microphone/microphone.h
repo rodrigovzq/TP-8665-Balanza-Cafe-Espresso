@@ -12,7 +12,7 @@
 
 float micAnalogRead();
 
-int micDigitalRead();
+bool micDigitalRead();
 
 //=====[#include guards - end]=================================================
 
