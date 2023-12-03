@@ -54,7 +54,6 @@ unit_t unitState;
 
 //=====[Declaration and initialization of private global variables]============
 
-
 //=====[Declarations (prototypes) of private functions]========================
 
 
@@ -62,7 +61,7 @@ static void userInterfaceDisplayInit();
 static void userInterfaceDisplayUpdate();
 
 //=====[Implementations of public functions]===================================
-void timerUpdate() {
+void timerUpdate(boton_t botonPresionado) {
 
 
     if (timerRunning){
@@ -88,7 +87,6 @@ void timerUpdate() {
             }
         break;
         case TRIGGER_MIC:
-            int x;
             if(micAnalogRead()>SOUND_TRIGGER_THRESHOLD){
                 if(!timerRunning){
                     timerRunning=true;
@@ -105,50 +103,47 @@ void timerUpdate() {
             break;
 
         case TRIGGER_EXT:
-            int y;
-            // if(micDigitalRead()){
-            //     if(!timerRunning){
-            //         timerRunning=true;
-            //         t.start();
-            //     }
-            // }
-            // if(timerButton==ON && timerRunning){
-            //     timerRunning=false;
-            //     t.stop();
-            //     while(timerButton==ON){ //debounce
-            //     }
-            // }
+            if (botonPresionado == BOTON_SET) {
+                if (!timerRunning) {
+                    timerRunning = true;
+                    t.start();
+                }
+            } else {
+                if (timerRunning) {
+                    timerRunning = false;
+                    t.stop();
+                }
+            }
             break;
             
     }
-    const char * botonPresionado = obtenerBotonPresionado(botonesLectura);
-    if(!strcmp(botonPresionado, "DOWN ")){
-        timerRunning=false;
+    if (botonPresionado == BOTON_DOWN) {
+        timerRunning = false;
         t.reset();
-
     }
+
    
 } 
-void loadCellUpdate(const char * botonPresionado) {
-    if(!strcmp(botonPresionado, "RIGHT")){
+void loadCellUpdate(boton_t botonPresionado) {
+    if (botonPresionado == BOTON_RIGHT) {
         tare();
     }
 }
 
-void triggerUpdate(const char * botonPresionado){
+void triggerUpdate(boton_t botonPresionado){
     if (triggerState == TRIGGER_MIC){
         micLed=ON;
     }else{
         micLed=OFF;
     }
-    if(!strcmp(botonPresionado, "UP")){
+    if (botonPresionado == BOTON_UP){
         switch (triggerState){
 
             case TRIGGER_BUTTON:
                 triggerState = TRIGGER_MIC;
             break;
             case TRIGGER_MIC:
-                triggerState = TRIGGER_BUTTON;
+                triggerState = TRIGGER_EXT;
 
             break;
             case TRIGGER_EXT:
@@ -161,24 +156,19 @@ void triggerUpdate(const char * botonPresionado){
 
 }
 
-void unitUpdate(const char * botonPresionado){
-
-    if(!strcmp(botonPresionado, "LEFT ")){
-        switch (unitState){
-
+void unitUpdate(boton_t botonPresionado) {
+    if (botonPresionado == BOTON_LEFT) {
+        switch (unitState) {
             case UNIT_GR:
-                unitState=UNIT_OZ;
-                delay(700);
-            break;
+                unitState = UNIT_OZ;
+                delay(700); 
+                break;
             case UNIT_OZ:
-                unitState=UNIT_GR;
-                delay(700);
-            break;
+                unitState = UNIT_GR;
+                delay(700); 
+                break;
         }
-    
     }
-
-
 }
 void userInterfaceInit()
 {
@@ -192,18 +182,19 @@ void userInterfaceInit()
 void userInterfaceUpdate()
 {
     botonesLectura =keypad.read();
-    const char * botonPresionado = obtenerBotonPresionado(botonesLectura);
+    boton_t botonPresionado = obtenerBotonPresionado(botonesLectura);
     triggerUpdate(botonPresionado);
     unitUpdate(botonPresionado);
-    timerUpdate();
+    timerUpdate(botonPresionado);
     loadCellUpdate(botonPresionado);
     userInterfaceDisplayUpdate();
+
     char aux[10]="";
     
     sprintf(aux,"%f\n",botonesLectura);
-    pcSerialComStringWrite(botonPresionado);    
-    
-    
+    if(botonesLectura<1)
+        pcSerialComStringWrite(aux); 
+  
 }
 
 
@@ -238,16 +229,22 @@ static void userInterfaceDisplayUpdate()
             break;
         }
         displayCharPositionWrite(14,1);
-        if (triggerState == TRIGGER_MIC){
-            displayStringWrite("*");
-        }else{
-            displayStringWrite(" ");
+        switch (triggerState) {
+            case TRIGGER_MIC:
+                displayStringWrite("*");
+                break;
+            case TRIGGER_EXT:
+                displayStringWrite("E");
+                break;
+            default:
+                displayStringWrite(" ");
+                break;
         }
+
         displayCharPositionWrite ( 0,0 );
         displayStringWrite( loadCellString );
 
 
-        const char* botonPresionado = obtenerBotonPresionado(botonesLectura);
         unsigned long long int tiempoMili = duration_cast<milliseconds>(t.elapsed_time()).count();
         displayCharPositionWrite ( 0,1 );
         if (tiempoMili){

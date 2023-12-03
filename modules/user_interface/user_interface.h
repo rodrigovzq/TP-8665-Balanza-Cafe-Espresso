@@ -2,7 +2,7 @@
 
 #ifndef _USER_INTERFACE_H_
 #define _USER_INTERFACE_H_
-
+#include "keypad.h"
 //=====[Declaration of public defines]=========================================
 
 //=====[Declaration of public data types]======================================
@@ -21,9 +21,9 @@ typedef enum{
 
 void userInterfaceInit();
 void userInterfaceUpdate();
-void timerUpdate();
-void loadCellUpdate(const char * botonPresionado);
-void triggerUpdate(const char * botonPresionado);
+void timerUpdate(boton_t botonPresionado);
+void loadCellUpdate(boton_t botonPresionado);
+void triggerUpdate(boton_t botonPresionado);
 
 
 
