@@ -4,20 +4,20 @@
 #include "arm_book_lib.h"
 #include "keypad.h"
 
-const char* obtenerBotonPresionado(float lectura) {
-    if (lectura > 0.99) {
-        return "SET ";
-    } else if (lectura > 0.8 && lectura <= 0.99000) {
-        return "     ";
-    } else if (lectura >= 0.6 && lectura <= 0.80) {
-        return "LEFT ";
-    } else if (lectura >= 0.3 && lectura < 0.6) {
-        return "DOWN ";
-    } else if (lectura >= 0.2 && lectura < 0.3) {
-        return "UP";
-    } else if (lectura >= 0 && lectura < 0.2) {
-        return "RIGHT";
+boton_t obtenerBotonPresionado(float lectura) {
+    if (lectura > VALOR_VACIO) {
+        return BOTON_VACIO;
+    } else if (lectura > VALOR_SET_INFERIOR && lectura <= VALOR_SET_SUPERIOR) {
+        return BOTON_SET;
+    } else if (lectura >= VALOR_LEFT_INFERIOR && lectura <= VALOR_LEFT_SUPERIOR) {
+        return BOTON_LEFT;
+    } else if (lectura >= VALOR_DOWN_INFERIOR && lectura < VALOR_DOWN_SUPERIOR) {
+        return BOTON_DOWN;
+    } else if (lectura >= VALOR_UP_INFERIOR && lectura < VALOR_UP_SUPERIOR) {
+        return BOTON_UP;
+    } else if (lectura >= 0 && lectura < VALOR_RIGHT) {
+        return BOTON_RIGHT;
     } else {
-        return "?";
+        return BOTON_DESCONOCIDO;
     }
 }
