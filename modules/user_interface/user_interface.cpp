@@ -103,7 +103,7 @@ void timerUpdate(boton_t botonPresionado) {
             break;
 
         case TRIGGER_EXT:
-            if (botonPresionado == BOTON_SET) {
+            if (timerButton==ON) {
                 if (!timerRunning) {
                     timerRunning = true;
                     t.start();
@@ -114,7 +114,7 @@ void timerUpdate(boton_t botonPresionado) {
                     t.stop();
                 }
             }
-            break;
+        break;
             
     }
     if (botonPresionado == BOTON_DOWN) {
