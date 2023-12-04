@@ -6,9 +6,9 @@
 
 boton_t obtenerBotonPresionado(float lectura) {
     if (lectura > VALOR_VACIO) {
-        return BOTON_VACIO;
-    } else if (lectura > VALOR_SET_INFERIOR && lectura <= VALOR_SET_SUPERIOR) {
         return BOTON_SET;
+    } else if (lectura > VALOR_SET_INFERIOR && lectura <= VALOR_SET_SUPERIOR) {
+        return BOTON_VACIO;
     } else if (lectura >= VALOR_LEFT_INFERIOR && lectura <= VALOR_LEFT_SUPERIOR) {
         return BOTON_LEFT;
     } else if (lectura >= VALOR_DOWN_INFERIOR && lectura < VALOR_DOWN_SUPERIOR) {
